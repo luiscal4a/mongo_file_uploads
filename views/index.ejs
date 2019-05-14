@@ -39,6 +39,9 @@
                       <form method="POST" action="/files/<%= file._id %>?_method=DELETE">
                         <button class="btn btn-danger btn-block mt-4">Delete</button>
                       </form>
+                      <form method="GET" action="/download/<%= file.filename %>">
+                        <button class="btn btn-success btn-block mt-2">Download</button>
+                      </form>
             </div>
             <% }) %>
               <% } else { %>

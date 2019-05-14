@@ -16,7 +16,7 @@ app.use(methodOverride('_method'));
 app.set('view engine', 'ejs');
 
 // Mongo URI
-const mongoURI = 'mongodb://brad:brad@ds257838.mlab.com:57838/mongouploads';
+const mongoURI = 'mongodb://localhost:27017/exampleGridFs';
 
 // Create mongo connection
 const conn = mongoose.createConnection(mongoURI);
@@ -77,7 +77,29 @@ app.get('/', (req, res) => {
 // @route POST /upload
 // @desc  Uploads file to DB
 app.post('/upload', upload.single('file'), (req, res) => {
-  // res.json({ file: req.file });
+  // Code to extract metadata from PDF files
+  /*
+  const pdfExtract = new PDFExtract();
+    const options = {};
+
+    var readableStream = gfs.createReadStream({ filename : req.file.filename });
+    var buff;
+
+    var bufferArray = [];
+    readableStream.on('data',function(chunk){  
+        bufferArray.push(chunk);
+    });
+    readableStream.on('end',function(){
+        var buffer = Buffer.concat(bufferArray);
+        buff=buffer;
+        pdfExtract.extractBuffer(buff, options, (err, data) => {
+          if (err) {
+            res.status(404).send({ message: err });
+          }
+          res.status(200).send({ message: data });
+        });
+    })
+  */
   res.redirect('/');
 });
 
@@ -145,6 +167,30 @@ app.delete('/files/:id', (req, res) => {
     }
 
     res.redirect('/');
+  });
+});
+
+app.get('/download/:filename', (req, res) => {
+  gfs.files.findOne({ filename: req.params.filename }, (err, file) => {
+    // Check if file
+    if (!file || file.length === 0) {
+      return res.status(404).json({
+        err: 'No file exists'
+      });
+    }
+    // File exists
+    res.set('Content-Type', file.contentType);
+    res.set('Content-Disposition', 'attachment; filename="' + file.filename + '"');
+    // streaming from gridfs
+    var readstream = gfs.createReadStream({
+      filename: req.params.filename
+    });
+    //error handling, e.g. file does not exist
+    readstream.on('error', function (err) {
+      console.log('An error occurred!', err);
+      throw err;
+    });
+    readstream.pipe(res);
   });
 });
 
